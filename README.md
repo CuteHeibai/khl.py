@@ -1,54 +1,21 @@
-# khl.py
+MIT License
 
-[![pypi version](https://img.shields.io/pypi/v/khl.py?label=latest&logo=pypi)](https://pypi.org/project/khl.py/)
-![GitHub last commit](https://img.shields.io/github/last-commit/TWT233/khl.py?logo=github)
+Copyright (c) 2022 TWT233
 
-[![khl server](https://www.kaiheila.cn/api/v3/badge/guild?guild_id=7236941486257903&style=3)](https://kaihei.co/JJE0Es)
-![github stars](https://img.shields.io/github/stars/TWT233/khl.py?style=social)
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-Python SDK for [kookapp.cn](https://www.kookapp.cn/)(aka [kaiheila.cn](https://www.kaiheila.cn/)) API
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-# Minimal Example
-
-```python
-from khl import Bot, Message
-
-# init Bot
-bot = Bot(token='xxxxxxxxxxxxxxxxxxxxxxxxx')
-
-
-# register command, send `/hello` in channel to invoke
-@bot.command(name='hello')
-async def world(msg: Message):
-    await msg.reply('world!')
-
-
-# everything done, go ahead now!
-bot.run()
-# now invite the bot to a server, and send '/hello' in any channel
-# (remember to grant the bot with read & send permissions)
-```
-
-# INSTALL
-
-requirement: Python >= 3.6.8
-
-```shell
-pip install khl.py
-```
-
-# Documentation
-
-- [Guide](https://khl-py.eu.org/) (authored by [musnows](https://github.com/musnows))
-- [Example](./example)
-- [Wiki](https://github.com/TWT233/khl.py/wiki) (archived FAQ)
-
-if your question has not been listed yet, please [create a issue](https://github.com/TWT233/khl.py/issues/new/choose)
-or [join our talk channel](https://kaihei.co/JJE0Es) for help
-
-# CONTRIBUTING
-
-welcome! we are glad to get help from community hands, and don't be shy to show your code,
-we can improve it together even if it's not perfect right now
-
-if there is any bug/perf/feature request, we are willing to deal with your issue/pull request!
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
