@@ -1,8 +1,20 @@
 {
     "commands": [
       {
-        "name": "help",
+        "name": "/help",
         "description": "帮助命令"
+      },
+      {
+        "name": "/kick",
+        "description": "踢出(/kick @user 原因)"
+      },
+      {
+        "name": "/mute",
+        "description": "禁言(/mute @user 时间-M-H-D 原因)"
+      },
+      {
+        "name": "/unmute",
+        "description": "解除禁言(/unmute @user 原因)"
       }
     ]
   }
