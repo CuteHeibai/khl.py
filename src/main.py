@@ -26,14 +26,70 @@ for command in commands["commands"]:
     booster_role_id = 40657489
     accepted_role_id = 40658439
     system_role_id = 45608346
+    staff_role_id = 45822668
     ann_chnnel_id = "8664560898306293"
+    ann_channel_id = "8664560898306293"
     mute_list = {}
     muting_tasks = {}
+    allowed_roles = {owner_role_id, admin_role_id, pm_role_id,  system_role_id,staff_role_id}
+    
+
+
 
 # 初始化 Bot
 bot = Bot(token=config['token'])
 
 # 定义公告消息函数
+async def send_clean_announcement(msg: Message, target_user: GuildUser, reason: str):
+    # 获取公告频道
+    channel = await bot.client.fetch_public_channel(ann_channel_id)
+    
+    # 获取管理员信息
+    admin_user = msg.author
+    
+    # 创建卡片消息
+    cm = CardMessage()
+    c = Card(
+        Module.Header(f"清除警告记录|{target_user.nickname}"),
+        Module.Divider(),
+        Module.Section(f"(met){target_user.id}(met)"),
+        Module.Section(
+            Struct.Paragraph(
+                2,
+                Element.Text(f"**类型:**\n清除警告记录", type=Types.Text.KMD),
+                Element.Text(f"**原因:**\n{reason}", type=Types.Text.KMD),
+            )
+        ),
+        Module.Divider(),
+        Module.Context(
+            Element.Text(f"(font)管理员|(font)[clean]", type=Types.Text.KMD),
+            Element.Image(src=admin_user.avatar),
+            Element.Text(f"(font){admin_user.nickname}(font)[clean]", type=Types.Text.KMD),
+        ),
+        theme=Types.Theme.SUCCESS,
+    )
+    cm.append(c)
+    
+    # 发送公告
+    try:
+        await channel.send(cm)
+    except Exception as e:
+        print(f"发送清除警告记录公告失败: {e}")
+
+def load_warning_data():
+    try:
+        with open('..\\khl.py\\src\\stat\\warning_counting.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return data
+    except FileNotFoundError:
+        return {}
+
+# 保存警告记录
+def save_warning_data(data):
+    with open('..\\khl.py\\src\\stat\\warning_counting.json', 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+
 async def ann_message(type, target_nickname, target_id, user_name, user_avatar, reason, time, duration):
     ch = await bot.client.fetch_public_channel(ann_chnnel_id)
     user_id = target_id[0]
@@ -156,6 +212,77 @@ def parse_duration(duration_str: str) -> int:
         return value * 86400  # 天
     else:
         return value  # 默认为秒
+    
+async def warn_announcement(msg: Message, target_user: GuildUser, warn_count: int, reason: str):
+    # 获取公告频道
+    ann_channel_id = "8664560898306293"  # 替换为你的公告频道 ID
+    channel = await bot.client.fetch_public_channel(ann_channel_id)
+    
+    # 获取管理员信息
+    admin_user = msg.author
+    
+    # 创建卡片消息
+    cm = CardMessage()
+    c = Card(
+        Module.Header(f"警告|{target_user.nickname}"),
+        Module.Divider(),
+        Module.Section(f"(met){target_user.id}(met)"),
+        Module.Section(
+            Struct.Paragraph(
+                3,
+                Element.Text(f"**类型:**\n警告", type=Types.Text.KMD),
+                Element.Text(f"**原因:**\n{reason}", type=Types.Text.KMD),
+                Element.Text(f"**警告次数:**\n#{warn_count}", type=Types.Text.KMD),
+            )
+        ),
+        Module.Divider(),
+        Module.Context(
+            Element.Text(f"(font)管理员|(font)[warning]", type=Types.Text.KMD),
+            Element.Image(src=admin_user.avatar),
+            Element.Text(f"(font){admin_user.nickname}(font)[warning]", type=Types.Text.KMD),
+        ),
+        theme=Types.Theme.WARNING,
+    )
+    cm.append(c)
+    
+    # 发送公告
+    try:
+        await channel.send(cm)
+    except Exception as e:
+        print(f"发送警告公告失败: {e}")
+
+async def send_error_response(msg: Message, content: str, theme=Types.Theme.DANGER):
+    cm = CardMessage()
+    c = Card(
+        Module.Header("错误"),
+        Module.Section(content),
+        Module.Divider(),
+        Module.Context(
+            Element.Text("触发用户", type=Types.Text.KMD),
+            Element.Image(src=msg.author.avatar),
+            Element.Text(msg.author.nickname, type=Types.Text.KMD),
+        ),
+        theme=theme,
+    )
+    cm.append(c)
+    await msg.reply(cm)
+
+
+async def send_success_response(msg: Message, content: str, theme=Types.Theme.SUCCESS):
+    cm = CardMessage()
+    c = Card(
+        Module.Header("操作成功！"),
+        Module.Section(content),
+        Module.Divider(),
+        Module.Context(
+            Element.Text("触发用户", type=Types.Text.KMD),
+            Element.Image(src=msg.author.avatar),
+            Element.Text(msg.author.nickname, type=Types.Text.KMD),
+        ),
+        theme=theme,
+    )
+    cm.append(c)
+    await msg.reply(cm)
 
 
 # 注册命令
@@ -187,8 +314,7 @@ async def world(msg: Message):
 async def mute(msg: Message, *args):
     user: GuildUser = msg.author
     guild: Guild = msg.ctx.guild
-    allowed_roles = {owner_role_id, admin_role_id, pm_role_id, helper_role_id, system_role_id}
-    
+
     # 检查执行者的权限
     if any(role in user.roles for role in allowed_roles):
         # 检查参数
@@ -309,7 +435,6 @@ async def mute(msg: Message, *args):
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 duration
             )
-            
             # 提示禁言成功
             cm = CardMessage()
             c = Card(
@@ -346,7 +471,6 @@ async def mute(msg: Message, *args):
 async def ban(msg: Message, *args):
     user: GuildUser = msg.author
     guild: Guild = msg.ctx.guild
-    allowed_roles = {owner_role_id, admin_role_id, pm_role_id, helper_role_id, system_role_id}
     
     # 检查执行者的权限
     if any(role in user.roles for role in allowed_roles):
@@ -391,7 +515,8 @@ async def ban(msg: Message, *args):
                         await ann_message("**服务器BAN**", target_nickname, target_id, user.nickname, user.avatar, reason, "**永久**")
                     else:
                         await ann_message("**服务器BAN**", target_nickname, target_id, user.nickname, user.avatar, "管理员未给出原因", "**永久**")
-                    await guild.kickout(target_id[0])  # 使用 khl.py 提供的踢出方法
+                    await guild.kickout(target_id[0])
+                      # 使用 khl.py 提供的踢出方法
             except Exception as e:
                 print(f"获取用户信息或角色失败: {e}")
                 cm = CardMessage()
@@ -443,7 +568,6 @@ async def ban(msg: Message, *args):
 async def unmute(msg: Message, *args):
     user: GuildUser = msg.author
     guild: Guild = msg.ctx.guild
-    allowed_roles = {owner_role_id, admin_role_id, pm_role_id, helper_role_id, system_role_id}
     
     # 检查执行者的权限
     if any(role in user.roles for role in allowed_roles):
@@ -471,7 +595,7 @@ async def unmute(msg: Message, *args):
             # 参数不足，提示用户
             cm = CardMessage()
             c = Card(
-                Module.Header("你没有提及用户"),
+                Module.Header("你没有选择用户"),
                 Module.Section("请选择你要解除禁言的用户"),
                 Module.Divider(),
                 Module.Context(
@@ -507,7 +631,7 @@ async def unmute(msg: Message, *args):
             # 删除 mute_list 中的记录
             if target_id in mute_list:
                 del mute_list[target_id]
-            
+
             # 发送解除惩罚公告
             reason = ' '.join(args[1:]) if len(args) > 1 else "无"
             if reason:
@@ -572,6 +696,94 @@ async def unmute(msg: Message, *args):
         )
         cm.append(c)
         await msg.reply(cm)
+
+@bot.command(name='warn', case_sensitive=False)
+async def warn_command(msg: Message, *args):
+    user: GuildUser = msg.author
+    guild: Guild = msg.ctx.guild
+    
+    # 检查权限
+    if any(role in user.roles for role in allowed_roles):
+        # 检查参数
+        if len(args) < 1:
+            await send_error_response(msg, "参数不足，请按照格式使用命令：/warn @xxx 原因 或 /warn clean @xxx 原因")
+            return
+        
+        # 判断是否为 'clean' 子命令
+        if args[0].lower() == 'clean':
+            await handle_clean_command(msg, args[1:])
+            return
+        
+        # 常规警告逻辑
+        target_id = msg.extra.get("mention", [])
+        if not target_id:
+            await send_error_response(msg, "你没有提及用户，请选择要警告的用户")
+            return
+        
+        target_id = target_id[0]
+        reason = ' '.join(args) if args else "未提供原因"
+        
+        # 更新警告次数
+        warning_counts = load_warning_data()
+        if target_id not in warning_counts:
+            warning_counts[target_id] = 1
+        else:
+            warning_counts[target_id] += 1
+        
+        # 保存警告记录到文件
+        save_warning_data(warning_counts)
+        
+        # 发送警告公告
+        target_user = await guild.fetch_user(target_id)
+        await warn_announcement(msg, target_user, warning_counts[target_id], reason)
+        
+        # 提示警告成功
+        await send_success_response(msg, f"已警告用户 {target_user.nickname}，原因：{reason}")
+    else:
+        # 提示无权限
+        await send_error_response(msg, "你没有权限使用该命令", theme=Types.Theme.DANGER)
+
+# 处理清除命令
+async def handle_clean_command(msg: Message, args):
+    guild: Guild = msg.ctx.guild
+    user: GuildUser = msg.author
+    
+    # 检查权限
+    if not any(role in user.roles for role in allowed_roles):
+        await send_error_response(msg, "你没有权限使用该命令", theme=Types.Theme.DANGER)
+        return
+    
+    # 检查参数
+    if len(args) < 1:
+        await send_error_response(msg, "参数不足，请按照格式使用命令：/warn clean @xxx 原因")
+        return
+    
+    # 获取目标用户
+    target_id = msg.extra.get("mention", [])
+    if not target_id:
+        await send_error_response(msg, "你没有提及用户，请选择要清除警告记录的用户")
+        return
+    
+    target_id = target_id[0]
+    reason = ' '.join(args) if args else "未提供原因"
+    
+    # 检查目标用户是否存在
+    try:
+        target_user = await guild.fetch_user(target_id)
+    except:
+        await send_error_response(msg, f"未找到用户 ID 为 {target_id} 的用户")
+        return
+    
+    # 清除警告次数
+    warning_counts = load_warning_data()
+    if target_id in warning_counts:
+        del warning_counts[target_id]
+        # 保存警告记录到文件
+        save_warning_data(warning_counts)
+        await send_clean_announcement(msg, target_user, reason)
+        await send_success_response(msg, f"已清除用户 {target_user.nickname} 的警告记录，原因：{reason}")
+    else:
+        await send_error_response(msg, f"用户 {target_user.nickname} 没有警告记录")
 
 # 运行机器人
 bot.run()

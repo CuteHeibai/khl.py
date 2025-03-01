@@ -15,6 +15,10 @@
       {
         "name": "/unmute",
         "description": "解除禁言(/unmute @user 原因)"
+      },
+      {
+        "name": "/warn",
+        "description": "警告(/warn @user 原因)"
       }
     ]
   }
