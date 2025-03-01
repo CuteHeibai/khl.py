@@ -19,6 +19,10 @@
       {
         "name": "/warn",
         "description": "警告(/warn @user 原因)"
+      },
+      {
+        "name": "/warn clean",
+        "description": "清除警告(/warn clean @user 原因)"
       }
     ]
   }

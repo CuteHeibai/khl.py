@@ -1,4 +1,5 @@
 # Written by Cuteheibai
+import re
 import json
 import asyncio
 
@@ -33,7 +34,6 @@ for command in commands["commands"]:
     muting_tasks = {}
     allowed_roles = {owner_role_id, admin_role_id, pm_role_id,  system_role_id,staff_role_id}
     
-
 
 
 # 初始化 Bot
@@ -88,7 +88,6 @@ def load_warning_data():
 def save_warning_data(data):
     with open('..\\khl.py\\src\\stat\\warning_counting.json', 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
-
 
 async def ann_message(type, target_nickname, target_id, user_name, user_avatar, reason, time, duration):
     ch = await bot.client.fetch_public_channel(ann_chnnel_id)
@@ -308,8 +307,6 @@ async def world(msg: Message):
     await msg.reply(cm)
 
 # /mute 命令
-# /mute 命令
-# /mute 命令
 @bot.command(name='mute', case_sensitive=False)
 async def mute(msg: Message, *args):
     user: GuildUser = msg.author
@@ -356,7 +353,8 @@ async def mute(msg: Message, *args):
         
         # 获取禁言时间和原因
         duration_str = args[1]
-        reason = ' '.join(args[2:]) if len(args) > 2 else ""
+        reason = ' '.join(args[2:]) if len(args) > 2 else "未提供原因"
+        reason = re.sub(r'<@\!?(\d+)>', '', reason).strip()
         
         duration = parse_duration(duration_str)
         if duration is None:
@@ -381,7 +379,7 @@ async def mute(msg: Message, *args):
         user_roles = target_user.roles  # 获取用户的角色列表
 
         # 检查目标用户是否有管理员权限
-        if any(role in allowed_roles for role in user_roles):
+        if any(role in user.roles for role in allowed_roles):
             # 提示无法禁言管理员
             cm = CardMessage()
             c = Card(
@@ -413,25 +411,13 @@ async def mute(msg: Message, *args):
             }
             
             # 发送禁言公告
-            if reason:
-                await ann_message(
+            await ann_message(
                 "禁言",
                 target_user.nickname,
                 [target_id],
                 user.nickname,
                 user.avatar,
                 reason,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                duration
-            )
-            else:
-                await ann_message(
-                "禁言",
-                target_user.nickname,
-                [target_id],
-                user.nickname,
-                user.avatar,
-                "管理员未给出原因",
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 duration
             )
@@ -475,7 +461,8 @@ async def ban(msg: Message, *args):
     # 检查执行者的权限
     if any(role in user.roles for role in allowed_roles):
         target_id = msg.extra.get("mention", [])
-        reason = ' '.join(args) if args else ""
+        reason = ' '.join(args) if args else "未提供原因"
+        reason = re.sub(r'<@\!?(\d+)>', '', reason).strip()
         
         if target_id:
             try:
@@ -512,9 +499,25 @@ async def ban(msg: Message, *args):
                     
                     target_nickname = target_user.nickname if target_user.nickname else target_user.username
                     if reason:
-                        await ann_message("**服务器BAN**", target_nickname, target_id, user.nickname, user.avatar, reason, "**永久**")
+                        await ann_message(
+                            "**服务器BAN**",
+                            target_nickname,
+                            target_id,
+                            user.nickname,
+                            user.avatar,
+                            reason,
+                            "**永久**"
+                        )
                     else:
-                        await ann_message("**服务器BAN**", target_nickname, target_id, user.nickname, user.avatar, "管理员未给出原因", "**永久**")
+                        await ann_message(
+                            "**服务器BAN**",
+                            target_nickname,
+                            target_id,
+                            user.nickname,
+                            user.avatar,
+                            "管理员未给出原因",
+                            "**永久**"
+                        )
                     await guild.kickout(target_id[0])
                       # 使用 khl.py 提供的踢出方法
             except Exception as e:
@@ -562,7 +565,6 @@ async def ban(msg: Message, *args):
         cm.append(c)
         await msg.reply(cm)
 
-# /unmute 命令
 # /unmute 命令
 @bot.command(name='unmute', case_sensitive=False)
 async def unmute(msg: Message, *args):
@@ -633,25 +635,26 @@ async def unmute(msg: Message, *args):
                 del mute_list[target_id]
 
             # 发送解除惩罚公告
-            reason = ' '.join(args[1:]) if len(args) > 1 else "无"
+            reason = ' '.join(args[1:]) if len(args) > 1 else "未提供原因"
+            reason = re.sub(r'<@\!?(\d+)>', '', reason).strip()
             if reason:
                 await unban_ann_message(
-                "解除禁言",
-                target_user.nickname,
-                [target_id],
-                user.nickname,
-                user.avatar,
-                reason
-            )
+                    "解除禁言",
+                    target_user.nickname,
+                    [target_id],
+                    user.nickname,
+                    user.avatar,
+                    reason
+                )
             else:
                 await unban_ann_message(
-                "解除禁言",
-                target_user.nickname,
-                [target_id],
-                user.nickname,
-                user.avatar,
-                "管理员未给出原因")
-
+                    "解除禁言",
+                    target_user.nickname,
+                    [target_id],
+                    user.nickname,
+                    user.avatar,
+                    "管理员未给出原因"
+                )
             
             # 提示解除禁言成功
             cm = CardMessage()
@@ -722,6 +725,7 @@ async def warn_command(msg: Message, *args):
         
         target_id = target_id[0]
         reason = ' '.join(args) if args else "未提供原因"
+        reason = re.sub(r'<@\!?(\d+)>', '', reason).strip()
         
         # 更新警告次数
         warning_counts = load_warning_data()
@@ -766,6 +770,7 @@ async def handle_clean_command(msg: Message, args):
     
     target_id = target_id[0]
     reason = ' '.join(args) if args else "未提供原因"
+    reason = clean_reason(reason)
     
     # 检查目标用户是否存在
     try:
