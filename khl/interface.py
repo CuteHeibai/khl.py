@@ -34,7 +34,7 @@ class LazyLoadable(ABC):
 
     For example:
         `Channel`: we usually construct a channel with a message for convenient,
-        while we only know the channel's id, so this channel is not `loaded`, until call the `load()`
+        while we only know the channel's id, so this channel is not `loaded`, utils call the `load()`
     """
     _loaded: bool
 

@@ -1,1 +1,1 @@
-             if any(role in target_roles for role in allowed_roles):
+                    # await guild.kickout(target_id[0])

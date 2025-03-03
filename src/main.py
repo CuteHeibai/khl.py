@@ -4,13 +4,13 @@ import json
 import asyncio
 
 from datetime import datetime, timedelta
-from khl import Message, Bot, GuildUser, Guild
+from khl import Bot, GuildUser, Guild,Message,Channel
 from khl.card import Card, CardMessage, Module, Types, Element, Struct
 
 # 读取配置文件
-with open('..\\khl.py\\src\\config\\config.json', 'r', encoding='utf-8') as f:
+with open('./config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
-with open('..\\khl.py\\src\\cmdlist\\commands.json', 'r', encoding='utf-8') as g:
+with open('./config/commands.json', 'r', encoding='utf-8') as g:
     commands = json.load(g)
 
 # 定义变量
@@ -20,25 +20,40 @@ for command in commands["commands"]:
     admin_role_id = 34396762
     owner_role_id = 40657344
     pm_role_id = 40657805
-    helper_role_id = 41731180
+    volunteer_role_id = 41731180
     veteran_role_id = 45630256
     premium_role_id = 45297442
     friend_role_id = 40657515
     booster_role_id = 40657489
     accepted_role_id = 40658439
     system_role_id = 45608346
-    staff_role_id = 45822668
-    ann_chnnel_id = "8664560898306293"
     ann_channel_id = "8664560898306293"
-    mute_list = {}
     muting_tasks = {}
-    allowed_roles = {owner_role_id, admin_role_id, pm_role_id,  system_role_id,staff_role_id}
+    has_permission = {owner_role_id, admin_role_id, pm_role_id, system_role_id}
     
 
 
 # 初始化 Bot
 bot = Bot(token=config['token'])
 
+def load_mute_list():
+    try:
+        with open('./stat/mute_list.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return data
+    except FileNotFoundError:
+        return {}
+
+def save_mute_list(data):
+    with open('./stat/mute_list.json', 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+mute_list = load_mute_list()
+
+# async def get_message_list(channel_id: str, msg_id: str = None, page_size: int = 50):
+#     channel = await bot.client.fetch_public_channel(channel_id)
+#     messages = await channel.list_messages(msg_id=msg_id, page_size=page_size)
+#     return messages
 # 定义公告消息函数
 async def send_clean_announcement(msg: Message, target_user: GuildUser, reason: str):
     # 获取公告频道
@@ -51,7 +66,6 @@ async def send_clean_announcement(msg: Message, target_user: GuildUser, reason: 
     cm = CardMessage()
     c = Card(
         Module.Header(f"清除警告记录|{target_user.nickname}"),
-        Module.Divider(),
         Module.Section(f"(met){target_user.id}(met)"),
         Module.Section(
             Struct.Paragraph(
@@ -78,7 +92,7 @@ async def send_clean_announcement(msg: Message, target_user: GuildUser, reason: 
 
 def load_warning_data():
     try:
-        with open('..\\khl.py\\src\\stat\\warning_counting.json', 'r', encoding='utf-8') as f:
+        with open('./stat/warning_counting.json', 'r', encoding='utf-8') as f:
             data = json.load(f)
             return data
     except FileNotFoundError:
@@ -86,16 +100,16 @@ def load_warning_data():
 
 # 保存警告记录
 def save_warning_data(data):
-    with open('..\\khl.py\\src\\stat\\warning_counting.json', 'w', encoding='utf-8') as f:
+    with open('./stat/warning_counting.json', 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-async def ann_message(type, target_nickname, target_id, user_name, user_avatar, reason, time, duration):
-    ch = await bot.client.fetch_public_channel(ann_chnnel_id)
+async def ann_message(type, target_nickname, target_id, user_name, user_avatar, reason, time, duration= None):
+    ch = await bot.client.fetch_public_channel(ann_channel_id)
     user_id = target_id[0]
-    end_time = datetime.now() + timedelta(seconds=duration)
-    
-    cm = CardMessage()
-    c = Card(
+    if not duration is None:
+        end_time = datetime.now() + timedelta(seconds=duration)
+        cm = CardMessage()
+        c = Card(
         Module.Header(f"惩罚|{target_nickname}"),
         Module.Divider(),
         Module.Section(f"(met){user_id}(met)"),
@@ -116,11 +130,38 @@ async def ann_message(type, target_nickname, target_id, user_name, user_avatar, 
         ),
         theme=Types.Theme.DANGER,
     )
-    cm.append(c)
-    try:
-        await ch.send(cm)
-    except Exception as e:
-        print(f"发送卡片消息失败: {e}")
+        cm.append(c)
+        try:
+            await ch.send(cm)
+        except Exception as e:
+            print(f"发送卡片消息失败: {e}")
+    else:
+        cm = CardMessage()
+        c = Card(
+            Module.Header(f"惩罚|{target_nickname}"),
+            Module.Divider(),
+            Module.Section(f"(met){user_id}(met)"),
+            Module.Section(
+                Struct.Paragraph(
+                    3,
+                    Element.Text(f"**类型:**\n{type}", type=Types.Text.KMD),
+                    Element.Text(f"**原因:**\n{reason}", type=Types.Text.KMD),
+                    Element.Text(f"**时间:**\n{time}", type=Types.Text.KMD),
+                )
+            ),
+            Module.Divider(),
+            Module.Context(
+                Element.Text(f"(font)管理员|(font)[pink]", type=Types.Text.KMD),
+                Element.Image(src=user_avatar),
+                Element.Text(f"(font){user_name}(font)[pink]", type=Types.Text.KMD),
+            ),
+            theme=Types.Theme.DANGER,
+        )
+        cm.append(c)
+        try:
+            await ch.send(cm)
+        except Exception as e:
+            print(f"发送卡片消息失败: {e}")
 
 async def update_mute_countdown(target_id, original_roles, guild):
     bot_user = await bot.client.fetch_me()
@@ -141,7 +182,11 @@ async def update_mute_countdown(target_id, original_roles, guild):
 
         if remaining_seconds <= 0:
             # 倒计时结束，自动解除禁言
-            del mute_list[target_id]
+            # 删除 mute_list 中的记录
+            if target_id in mute_list:
+                del mute_list[target_id]
+                # 保存到文件
+                save_mute_list(mute_list)
             for role_id in original_roles:
                 await guild.grant_role(target_id, role_id)  # 恢复原有角色
             await guild.revoke_role(target_id, 45821814)  # 移除禁言角色
@@ -161,7 +206,7 @@ async def update_mute_countdown(target_id, original_roles, guild):
         await asyncio.sleep(1)
 
 async def unban_ann_message(type, target_nickname, target_id, user_name, user_avatar, reason):
-    ch = await bot.client.fetch_public_channel(ann_chnnel_id)
+    ch = await bot.client.fetch_public_channel(ann_channel_id)
     user_id = target_id[0]
     
     cm = CardMessage()
@@ -211,44 +256,6 @@ def parse_duration(duration_str: str) -> int:
         return value * 86400  # 天
     else:
         return value  # 默认为秒
-    
-async def warn_announcement(msg: Message, target_user: GuildUser, warn_count: int, reason: str):
-    # 获取公告频道
-    ann_channel_id = "8664560898306293"  # 替换为你的公告频道 ID
-    channel = await bot.client.fetch_public_channel(ann_channel_id)
-    
-    # 获取管理员信息
-    admin_user = msg.author
-    
-    # 创建卡片消息
-    cm = CardMessage()
-    c = Card(
-        Module.Header(f"警告|{target_user.nickname}"),
-        Module.Divider(),
-        Module.Section(f"(met){target_user.id}(met)"),
-        Module.Section(
-            Struct.Paragraph(
-                3,
-                Element.Text(f"**类型:**\n警告", type=Types.Text.KMD),
-                Element.Text(f"**原因:**\n{reason}", type=Types.Text.KMD),
-                Element.Text(f"**警告次数:**\n#{warn_count}", type=Types.Text.KMD),
-            )
-        ),
-        Module.Divider(),
-        Module.Context(
-            Element.Text(f"(font)管理员|(font)[warning]", type=Types.Text.KMD),
-            Element.Image(src=admin_user.avatar),
-            Element.Text(f"(font){admin_user.nickname}(font)[warning]", type=Types.Text.KMD),
-        ),
-        theme=Types.Theme.WARNING,
-    )
-    cm.append(c)
-    
-    # 发送公告
-    try:
-        await channel.send(cm)
-    except Exception as e:
-        print(f"发送警告公告失败: {e}")
 
 async def send_error_response(msg: Message, content: str, theme=Types.Theme.DANGER):
     cm = CardMessage()
@@ -313,7 +320,7 @@ async def mute(msg: Message, *args):
     guild: Guild = msg.ctx.guild
 
     # 检查执行者的权限
-    if any(role in user.roles for role in allowed_roles):
+    if any(role in user.roles for role in has_permission):
         # 检查参数
         if len(args) < 2:
             # 参数不足，提示用户
@@ -379,13 +386,14 @@ async def mute(msg: Message, *args):
         user_roles = target_user.roles  # 获取用户的角色列表
 
         # 检查目标用户是否有管理员权限
-        if any(role in user.roles for role in allowed_roles):
+        if any(role in has_permission for role in user_roles):
             # 提示无法禁言管理员
             cm = CardMessage()
             c = Card(
                 Module.Header("你不能禁言该用户！"),
                 Module.Divider(),
                 Module.Section("该用户具有管理员权限，不能被禁言。"),
+                Module.Divider(),
                 Module.Context(
                     Element.Text("触发用户", type=Types.Text.KMD),
                     Element.Image(src=msg.author.avatar),
@@ -405,10 +413,13 @@ async def mute(msg: Message, *args):
             await guild.grant_role(target_id, 45821814)  # 添加禁言角色
             
             # 记录禁言信息
+            # 记录禁言信息
             mute_list[target_id] = {
-                "original_roles": original_roles,
-                "duration": duration
+            "original_roles": original_roles,
+            "duration": duration
             }
+            # 保存到文件
+            save_mute_list(mute_list)
             
             # 发送禁言公告
             await ann_message(
@@ -426,6 +437,7 @@ async def mute(msg: Message, *args):
             c = Card(
                 Module.Header("操作成功！"),
                 Module.Section(f"已禁言用户 {target_user.nickname}，时长 {duration_str}。"),
+                Module.Divider(),
                 Module.Context(
                     Element.Text("触发用户", type=Types.Text.KMD),
                     Element.Image(src=msg.author.avatar),
@@ -459,7 +471,7 @@ async def ban(msg: Message, *args):
     guild: Guild = msg.ctx.guild
     
     # 检查执行者的权限
-    if any(role in user.roles for role in allowed_roles):
+    if any(role in user.roles for role in has_permission):
         target_id = msg.extra.get("mention", [])
         reason = ' '.join(args) if args else "未提供原因"
         reason = re.sub(r'<@\!?(\d+)>', '', reason).strip()
@@ -470,13 +482,14 @@ async def ban(msg: Message, *args):
                 user_role_ids = target_user.roles  # 假设返回角色ID列表
                 user_roles = [role_id for role_id in user_role_ids]
                 
-                # 检查用户是否有allowed_roles中的角色
-                if any(role in allowed_roles for role in user_roles):
+                # 检查用户是否有has_permission中的角色
+                if any(role in has_permission for role in user_roles):
                     cm = CardMessage()
                     c = Card(
                         Module.Header("你不能封禁该用户！"),
                         Module.Divider(),
                         Module.Section("该用户具有管理员权限，不能被封禁。"),
+                        Module.Divider(),
                         Module.Context(
                             Element.Text("触发用户", type=Types.Text.KMD),
                             Element.Image(src=msg.author.avatar),
@@ -518,7 +531,7 @@ async def ban(msg: Message, *args):
                             "管理员未给出原因",
                             "**永久**"
                         )
-                    await guild.kickout(target_id[0])
+                    # await guild.kickout(target_id[0])
                       # 使用 khl.py 提供的踢出方法
             except Exception as e:
                 print(f"获取用户信息或角色失败: {e}")
@@ -572,7 +585,7 @@ async def unmute(msg: Message, *args):
     guild: Guild = msg.ctx.guild
     
     # 检查执行者的权限
-    if any(role in user.roles for role in allowed_roles):
+    if any(role in user.roles for role in has_permission):
         # 检查参数
         if len(args) < 1:
             # 参数不足，提示用户
@@ -661,6 +674,7 @@ async def unmute(msg: Message, *args):
             c = Card(
                 Module.Header("操作成功！"),
                 Module.Section(f"已解除用户 {target_user.nickname} 的禁言。"),
+                Module.Divider(),
                 Module.Context(
                     Element.Text("触发用户", type=Types.Text.KMD),
                     Element.Image(src=msg.author.avatar),
@@ -675,6 +689,7 @@ async def unmute(msg: Message, *args):
             c = Card(
                 Module.Header("操作失败！"),
                 Module.Section(f"用户 {target_user.nickname} 未被禁言。"),
+                Module.Divider(),
                 Module.Context(
                     Element.Text("触发用户", type=Types.Text.KMD),
                     Element.Image(src=msg.author.avatar),
@@ -706,7 +721,7 @@ async def warn_command(msg: Message, *args):
     guild: Guild = msg.ctx.guild
     
     # 检查权限
-    if any(role in user.roles for role in allowed_roles):
+    if any(role in user.roles for role in has_permission):
         # 检查参数
         if len(args) < 1:
             await send_error_response(msg, "参数不足，请按照格式使用命令：/warn @xxx 原因 或 /warn clean @xxx 原因")
@@ -724,7 +739,7 @@ async def warn_command(msg: Message, *args):
             return
         
         target_id = target_id[0]
-        reason = ' '.join(args) if args else "未提供原因"
+        reason = ' '.join(args[1:]) if len(args) > 1 else "未提供原因"
         reason = re.sub(r'<@\!?(\d+)>', '', reason).strip()
         
         # 更新警告次数
@@ -739,7 +754,15 @@ async def warn_command(msg: Message, *args):
         
         # 发送警告公告
         target_user = await guild.fetch_user(target_id)
-        await warn_announcement(msg, target_user, warning_counts[target_id], reason)
+        await ann_message(
+                "警告",
+                target_user.nickname,
+                [target_id],
+                user.nickname,
+                user.avatar,
+                reason,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            )
         
         # 提示警告成功
         await send_success_response(msg, f"已警告用户 {target_user.nickname}，原因：{reason}")
@@ -753,7 +776,7 @@ async def handle_clean_command(msg: Message, args):
     user: GuildUser = msg.author
     
     # 检查权限
-    if not any(role in user.roles for role in allowed_roles):
+    if not any(role in user.roles for role in has_permission):
         await send_error_response(msg, "你没有权限使用该命令", theme=Types.Theme.DANGER)
         return
     
@@ -770,7 +793,7 @@ async def handle_clean_command(msg: Message, args):
     
     target_id = target_id[0]
     reason = ' '.join(args) if args else "未提供原因"
-    reason = clean_reason(reason)
+
     
     # 检查目标用户是否存在
     try:
@@ -790,5 +813,49 @@ async def handle_clean_command(msg: Message, args):
     else:
         await send_error_response(msg, f"用户 {target_user.nickname} 没有警告记录")
 
+
+# 添加命令 /clean
+# @bot.command(name='clean', case_sensitive=False)
+# async def clean_command(msg: Message):
+#     user: GuildUser = msg.author
+#     channel_id: Channel = msg.ctx.channel.id
+#
+#     messages = await get_message_list(channel_id)
+#
+#     # 检查执行者是否有管理员权限
+#     if any(role in user.roles for role in has_permission):
+#         # 获取消息列表
+#         try:
+#             for message in messages:
+#                 await delete()
+#
+#         except:
+#             await msg.reply("删除消息失败")
+#             return
+#         # 发送删除成功的消息
+#         cm = CardMessage()
+#         c = Card(
+#             Module.Header(f"成功清除消息"),
+#             Module.Context(
+#                 Element.Text("触发用户"),
+#                 Element.Image(src=user.avatar),
+#                 Element.Text(user.nickname)
+#             )
+#         )
+#         cm.append(c)
+#         await msg.reply(cm)
+#     else:
+#         # 提示无权限
+#         cm = CardMessage()
+#         c = Card(
+#             Module.Header("你没有权限使用该命令"),
+#             Module.Context(
+#                 Element.Text("触发用户"),
+#                 Element.Image(src=user.avatar),
+#                 Element.Text(user.nickname)
+#             )
+#         )
+#         cm.append(c)
+#         await msg.reply(cm)
 # 运行机器人
 bot.run()
