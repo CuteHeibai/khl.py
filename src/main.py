@@ -302,7 +302,7 @@ async def world(msg: Message):
     for command in commands["commands"]:
         name = command["name"]
         description = command["description"]
-        c.append(Module.Section(f"**{name} - {description}**"))
+        c.append(Module.Section(f"`{name}` - {description}"))
     
     c.append(Module.Divider())
     c.append(Module.Context(
