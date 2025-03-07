@@ -76,11 +76,11 @@ async def send_clean_announcement(msg: Message, target_user: GuildUser, reason: 
         ),
         Module.Divider(),
         Module.Context(
-            Element.Text(f"(font)管理员|(font)[clean]", type=Types.Text.KMD),
+            Element.Text(f"管理员|", type=Types.Text.KMD),
             Element.Image(src=admin_user.avatar),
-            Element.Text(f"(font){admin_user.nickname}(font)[clean]", type=Types.Text.KMD),
+            Element.Text(f"{admin_user.nickname}", type=Types.Text.KMD),
         ),
-        theme=Types.Theme.SUCCESS,
+        theme=Types.Theme.PRIMARY,
     )
     cm.append(c)
     
@@ -111,7 +111,6 @@ async def ann_message(type, target_nickname, target_id, user_name, user_avatar, 
         cm = CardMessage()
         c = Card(
         Module.Header(f"惩罚|{target_nickname}"),
-        Module.Divider(),
         Module.Section(f"(met){user_id}(met)"),
         Module.Section(
             Struct.Paragraph(
@@ -121,12 +120,12 @@ async def ann_message(type, target_nickname, target_id, user_name, user_avatar, 
                 Element.Text(f"**时间:**\n{time}", type=Types.Text.KMD),
             )
         ),
-        Module.Countdown(end_time, mode=Types.CountdownMode.SECOND),
+        Module.Countdown(end_time, mode=Types.CountdownMode.DAY),
         Module.Divider(),
         Module.Context(
-            Element.Text(f"(font)管理员|(font)[pink]", type=Types.Text.KMD),
+            Element.Text(f"管理员|", type=Types.Text.KMD),
             Element.Image(src=user_avatar),
-            Element.Text(f"(font){user_name}(font)[pink]", type=Types.Text.KMD),
+            Element.Text(f"{user_name}", type=Types.Text.KMD),
         ),
         theme=Types.Theme.DANGER,
     )
@@ -139,7 +138,6 @@ async def ann_message(type, target_nickname, target_id, user_name, user_avatar, 
         cm = CardMessage()
         c = Card(
             Module.Header(f"惩罚|{target_nickname}"),
-            Module.Divider(),
             Module.Section(f"(met){user_id}(met)"),
             Module.Section(
                 Struct.Paragraph(
@@ -151,9 +149,9 @@ async def ann_message(type, target_nickname, target_id, user_name, user_avatar, 
             ),
             Module.Divider(),
             Module.Context(
-                Element.Text(f"(font)管理员|(font)[pink]", type=Types.Text.KMD),
+                Element.Text(f"管理员|", type=Types.Text.KMD),
                 Element.Image(src=user_avatar),
-                Element.Text(f"(font){user_name}(font)[pink]", type=Types.Text.KMD),
+                Element.Text(f"{user_name}", type=Types.Text.KMD),
             ),
             theme=Types.Theme.DANGER,
         )
@@ -199,33 +197,34 @@ async def update_mute_countdown(target_id, original_roles, guild):
                 [user.id],
                 bot_name,
                 bot_avatar,  # 替换为实际的管理员头像
-                "惩罚时间已结束，自动解除禁言"
+                "惩罚时间已结束，自动解除禁言",
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             )
             break
 
         await asyncio.sleep(1)
 
-async def unban_ann_message(type, target_nickname, target_id, user_name, user_avatar, reason):
+async def unban_ann_message(type, target_nickname, target_id, user_name, user_avatar, reason,time):
     ch = await bot.client.fetch_public_channel(ann_channel_id)
     user_id = target_id[0]
     
     cm = CardMessage()
     c = Card(
         Module.Header(f"解除惩罚|{target_nickname}"),
-        Module.Divider(),
         Module.Section(f"(met){user_id}(met)"),
         Module.Section(
             Struct.Paragraph(
-                2,
+                3,
                 Element.Text(f"**类型:**\n{type}", type=Types.Text.KMD),
                 Element.Text(f"**原因:**\n{reason}", type=Types.Text.KMD),
+                Element.Text(f"**时间:**\n{time}",type=Types.Text.KMD),
             )
         ),
         Module.Divider(),
         Module.Context(
-            Element.Text(f"(font)管理员|(font)[success]", type=Types.Text.KMD),
+            Element.Text(f"管理员|", type=Types.Text.KMD),
             Element.Image(src=user_avatar),
-            Element.Text(f"(font){user_name}(font)[success]", type=Types.Text.KMD),
+            Element.Text(f"{user_name}", type=Types.Text.KMD),
         ),
         theme=Types.Theme.SUCCESS,  # 设置卡片主题为绿色
     )
@@ -262,7 +261,6 @@ async def send_error_response(msg: Message, content: str, theme=Types.Theme.DANG
     c = Card(
         Module.Header("错误"),
         Module.Section(content),
-        Module.Divider(),
         Module.Context(
             Element.Text("触发用户", type=Types.Text.KMD),
             Element.Image(src=msg.author.avatar),
@@ -279,7 +277,6 @@ async def send_success_response(msg: Message, content: str, theme=Types.Theme.SU
     c = Card(
         Module.Header("操作成功！"),
         Module.Section(content),
-        Module.Divider(),
         Module.Context(
             Element.Text("触发用户", type=Types.Text.KMD),
             Element.Image(src=msg.author.avatar),
@@ -293,7 +290,7 @@ async def send_success_response(msg: Message, content: str, theme=Types.Theme.SU
 
 # 注册命令
 @bot.command(name='help', case_sensitive=False)
-async def world(msg: Message):
+async def help(msg: Message):
     cm = CardMessage()
     c = Card(
         Module.Header("服务器指令帮助"),
@@ -304,7 +301,7 @@ async def world(msg: Message):
         description = command["description"]
         c.append(Module.Section(f"`{name}` - {description}"))
     
-    c.append(Module.Divider())
+    c.append(Module.Divider(),)
     c.append(Module.Context(
         Element.Text("触发用户", type=Types.Text.KMD),
         Element.Image(src=msg.author.avatar),
@@ -369,7 +366,7 @@ async def mute(msg: Message, *args):
             cm = CardMessage()
             c = Card(
                 Module.Header("禁言时间格式错误"),
-                Module.Section("禁言时间格式应为：数字 + 单位（M 表示分钟，H 表示小时，D 表示天），例如：30M、2H、7D"),
+                Module.Section("禁言时间格式应为：数字 + 单位(M 表示分钟，H 表示小时，D 表示天)"),
                 Module.Divider(),
                 Module.Context(
                     Element.Text("触发用户", type=Types.Text.KMD),
@@ -391,7 +388,6 @@ async def mute(msg: Message, *args):
             cm = CardMessage()
             c = Card(
                 Module.Header("你不能禁言该用户！"),
-                Module.Divider(),
                 Module.Section("该用户具有管理员权限，不能被禁言。"),
                 Module.Divider(),
                 Module.Context(
@@ -436,7 +432,7 @@ async def mute(msg: Message, *args):
             cm = CardMessage()
             c = Card(
                 Module.Header("操作成功！"),
-                Module.Section(f"已禁言用户 {target_user.nickname}，时长 {duration_str}。"),
+                Module.Section(f"已禁言用户(met){target_user.id}(met)，时长{duration_str}。"),
                 Module.Divider(),
                 Module.Context(
                     Element.Text("触发用户", type=Types.Text.KMD),
@@ -503,8 +499,12 @@ async def ban(msg: Message, *args):
                     cm = CardMessage()
                     c = Card(
                         Module.Header("操作成功！"),
+                        Module.Section(f"已封禁用户(met){target_user.id}(met)"),
                         Module.Divider(),
-                        Module.Section(f"已封禁用户 {target_user.nickname}")
+                        Module.Context(Element.Text("触发用户", type=Types.Text.KMD),
+                        Element.Image(src=msg.author.avatar),
+                        Element.Text(msg.author.nickname, type=Types.Text.KMD),)
+
                     )
                     cm.append(c)
                     await msg.reply(cm)
@@ -530,8 +530,7 @@ async def ban(msg: Message, *args):
                             "管理员未给出原因",
                             "**永久**"
                         )
-                    # await guild.kickout(target_id[0])
-                      # 使用 khl.py 提供的踢出方法
+                    await guild.kickout(target_id[0])
             except Exception as e:
                 print(f"获取用户信息或角色失败: {e}")
                 cm = CardMessage()
@@ -656,7 +655,8 @@ async def unmute(msg: Message, *args):
                     [target_id],
                     user.nickname,
                     user.avatar,
-                    reason
+                    reason,
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 )
             else:
                 await unban_ann_message(
@@ -665,14 +665,15 @@ async def unmute(msg: Message, *args):
                     [target_id],
                     user.nickname,
                     user.avatar,
-                    "管理员未给出原因"
+                    "管理员未给出原因",
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 )
             
             # 提示解除禁言成功
             cm = CardMessage()
             c = Card(
                 Module.Header("操作成功！"),
-                Module.Section(f"已解除用户 {target_user.nickname} 的禁言。"),
+                Module.Section(f"已解除用户 (met){target_user.id}(met)的禁言。"),
                 Module.Divider(),
                 Module.Context(
                     Element.Text("触发用户", type=Types.Text.KMD),
@@ -687,7 +688,7 @@ async def unmute(msg: Message, *args):
             cm = CardMessage()
             c = Card(
                 Module.Header("操作失败！"),
-                Module.Section(f"用户 {target_user.nickname} 未被禁言。"),
+                Module.Section(f"该用户未被禁言。"),
                 Module.Divider(),
                 Module.Context(
                     Element.Text("触发用户", type=Types.Text.KMD),
@@ -728,7 +729,7 @@ async def warn_command(msg: Message, *args):
         
         # 判断是否为 'clean' 子命令
         if args[0].lower() == 'clean':
-            await handle_clean_command(msg, args[1:])
+            await handle_clean_command(msg, args[2:])
             return
         
         # 常规警告逻辑
@@ -764,7 +765,7 @@ async def warn_command(msg: Message, *args):
             )
         
         # 提示警告成功
-        await send_success_response(msg, f"已警告用户 {target_user.nickname}，原因：{reason}")
+        await send_success_response(msg, f"已警告用户(met){target_user.id}(met)，原因：{reason}")
     else:
         # 提示无权限
         await send_error_response(msg, "你没有权限使用该命令", theme=Types.Theme.DANGER)
@@ -791,7 +792,8 @@ async def handle_clean_command(msg: Message, args):
         return
     
     target_id = target_id[0]
-    reason = ' '.join(args) if args else "未提供原因"
+    reason = ''.join(args) if args else "未提供原因"
+    reason = re.sub(r'<@\!?(\d+)>', '', reason).strip()
 
     
     # 检查目标用户是否存在
@@ -808,9 +810,178 @@ async def handle_clean_command(msg: Message, args):
         # 保存警告记录到文件
         save_warning_data(warning_counts)
         await send_clean_announcement(msg, target_user, reason)
-        await send_success_response(msg, f"已清除用户 {target_user.nickname} 的警告记录，原因：{reason}")
+        await send_success_response(msg, f"已清除用户(met){target_user.id}(met)的警告记录，原因：{reason}")
     else:
-        await send_error_response(msg, f"用户 {target_user.nickname} 没有警告记录")
+        await send_error_response(msg, f"用户(met){target_user.id}(met)没有警告记录")
+
+
+@bot.command(name='game-up')
+async def game_up_cmd(msg: Message, game_id: int):
+        print("get /game-up cmd")
+        # 传入 Game 对象，或者游戏的ID
+        await bot.client.update_playing_game(game_id)
+        await msg.reply(f"游戏「{game_id}」上线")
+
+@bot.command(name='game-down')
+async def game_down_cmd(msg: Message):
+        print("get /game-down cmd")
+        await bot.client.stop_playing_game()
+        await msg.reply(f"游戏状态下线")
+
+async def game2():
+    await bot.client.stop_playing_game()
+    await bot.client.update_playing_game(2488140)
+async def game3():
+    await bot.client.stop_playing_game()
+    await bot.client.update_playing_game(2488170)
+
+@bot.task.add_interval(seconds=20)
+async def alternate_functions():
+        await game2()
+        await asyncio.sleep(10)
+        await game3()
+
+
+
+
+
+# @bot.command(name='role', case_sensitive=False)
+# async def role(msg: Message, *args):
+#     user: GuildUser = msg.author
+#     guild: Guild = msg.ctx.guild
+#
+#     # 检查执行者的权限
+#     if any(role in user.roles for role in has_permission):
+#         # 检查参数
+#         if len(args) < 2:
+#             # 参数不足，提示用户
+#             cm = CardMessage()
+#             c = Card(
+#                 Module.Header("参数不足"),
+#                 Module.Section("请按照格式使用命令：/role @用户 @角色"),
+#                 Module.Divider(),
+#                 Module.Context(
+#                     Element.Text("触发用户", type=Types.Text.KMD),
+#                     Element.Image(src=msg.author.avatar),
+#                     Element.Text(msg.author.nickname, type=Types.Text.KMD),
+#                 )
+#             )
+#             cm.append(c)
+#             await msg.reply(cm)
+#             return
+#
+#         # 获取目标用户和目标角色
+#         target_id = msg.extra.get("mention", [])
+#         if not target_id:
+#             # 参数不足，提示用户
+#             cm = CardMessage()
+#             c = Card(
+#                 Module.Header("你没有提及用户或角色"),
+#                 Module.Section("请选择你要操作的用户和角色"),
+#                 Module.Divider(),
+#                 Module.Context(
+#                     Element.Text("触发用户", type=Types.Text.KMD),
+#                     Element.Image(src=msg.author.avatar),
+#                     Element.Text(msg.author.nickname, type=Types.Text.KMD),
+#                 )
+#             )
+#             cm.append(c)
+#             await msg.reply(cm)
+#             return
+#
+#         # 获取目标用户和目标角色
+#         target_user_id = target_id[0]
+#         target_role_id = args[1]
+#
+#         if not target_role_id:
+#             cm = CardMessage()
+#             c = Card(
+#                 Module.Header("你没有提及角色"),
+#                 Module.Section("请选择要添加的角色"),
+#                 Module.Divider(),
+#                 Module.Context(
+#                     Element.Text("触发用户", type=Types.Text.KMD),
+#                     Element.Image(src=msg.author.avatar),
+#                     Element.Text(msg.author.nickname, type=Types.Text.KMD),
+#                 )
+#             )
+#             cm.append(c)
+#             await msg.reply(cm)
+#             return
+#
+#         # 获取目标用户和目标角色的信息
+#         target_user = await guild.fetch_user(target_user_id)
+#         target_role = await guild.fetch_roles(target_role_id)
+#
+#         # 检查目标角色是否存在
+#         if not target_role:
+#             cm = CardMessage()
+#             c = Card(
+#                 Module.Header("角色不存在"),
+#                 Module.Section(f"未找到角色 ID 为 {target_role_id} 的角色"),
+#                 Module.Divider(),
+#                 Module.Context(
+#                     Element.Text("触发用户", type=Types.Text.KMD),
+#                     Element.Image(src=msg.author.avatar),
+#                     Element.Text(msg.author.nickname, type=Types.Text.KMD),
+#                 )
+#             )
+#             cm.append(c)
+#             await msg.reply(cm)
+#             return
+#
+#         # 检查目标用户是否已经拥有该角色
+#         if target_role_id in target_user.roles:
+#             cm = CardMessage()
+#             c = Card(
+#                 Module.Header("操作失败！"),
+#                 Module.Section(f"用户 {target_user.nickname} 已经拥有角色 {target_role}。"),
+#                 Module.Divider(),
+#                 Module.Context(
+#                     Element.Text("触发用户", type=Types.Text.KMD),
+#                     Element.Image(src=msg.author.avatar),
+#                     Element.Text(msg.author.nickname, type=Types.Text.KMD),
+#                 ),
+#                 theme=Types.Theme.DANGER
+#             )
+#             cm.append(c)
+#             await msg.reply(cm)
+#             return
+#
+#         # 执行添加角色操作
+#         await target_user.add_role(target_role_id)
+#
+#         # 发送操作成功公告
+#         cm = CardMessage()
+#         c = Card(
+#             Module.Header("操作成功！"),
+#             Module.Section(f"已为用户 {target_user.nickname} 添加角色 {target_role.name}。"),
+#             Module.Divider(),
+#             Module.Context(
+#                 Element.Text("触发用户", type=Types.Text.KMD),
+#                 Element.Image(src=msg.author.avatar),
+#                 Element.Text(msg.author.nickname, type=Types.Text.KMD),
+#             ),
+#             theme=Types.Theme.SUCCESS
+#         )
+#         cm.append(c)
+#         await msg.reply(cm)
+#
+#     else:
+#         # 提示无权限
+#         cm = CardMessage()
+#         c = Card(
+#             Module.Header("你没有权限使用该命令"),
+#             Module.Divider(),
+#             Module.Context(
+#                 Element.Text("触发用户", type=Types.Text.KMD),
+#                 Element.Image(src=msg.author.avatar),
+#                 Element.Text(msg.author.nickname, type=Types.Text.KMD),
+#             ),
+#             theme=Types.Theme.DANGER
+#         )
+#         cm.append(c)
+#         await msg.reply(cm)
 
 
 # 添加命令 /clean

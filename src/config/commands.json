@@ -23,6 +23,14 @@
       {
         "name": "/warn clean",
         "description": "清除警告`/warn clean @user 原因`"
+      },
+      {
+        "name": "/game-c",
+        "description": "创建游戏`/game-c name icon`"
+      },
+      {
+        "name": "/game-up",
+        "description": "上线指令`/game-up id`"
       }
     ]
   }
