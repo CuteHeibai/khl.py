@@ -487,7 +487,6 @@ async def ban(msg: Message, *args):
                     cm = CardMessage()
                     c = Card(
                         Module.Header("你不能封禁该用户！"),
-                        Module.Divider(),
                         Module.Section("该用户具有管理员权限，不能被封禁。"),
                         Module.Divider(),
                         Module.Context(
