@@ -4,13 +4,13 @@ import json
 import asyncio
 
 from datetime import datetime, timedelta
-from khl import Bot, GuildUser, Guild,Message,Channel
+from khl import Bot, GuildUser, Guild, Message
 from khl.card import Card, CardMessage, Module, Types, Element, Struct
 
 # 读取配置文件
-with open('./config/config.json', 'r', encoding='utf-8') as f:
+with open('src/config/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
-with open('./config/commands.json', 'r', encoding='utf-8') as g:
+with open('src/config/commands.json', 'r', encoding='utf-8') as g:
     commands = json.load(g)
 
 # 定义变量
@@ -38,14 +38,14 @@ bot = Bot(token=config['token'])
 
 def load_mute_list():
     try:
-        with open('./stat/mute_list.json', 'r', encoding='utf-8') as f:
+        with open('src/stat/mute_list.json', 'r', encoding='utf-8') as f:
             data = json.load(f)
             return data
     except FileNotFoundError:
         return {}
 
 def save_mute_list(data):
-    with open('./stat/mute_list.json', 'w', encoding='utf-8') as f:
+    with open('src/stat/mute_list.json', 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 mute_list = load_mute_list()
@@ -92,7 +92,7 @@ async def send_clean_announcement(msg: Message, target_user: GuildUser, reason: 
 
 def load_warning_data():
     try:
-        with open('./stat/warning_counting.json', 'r', encoding='utf-8') as f:
+        with open('src/stat/warning_counting.json', 'r', encoding='utf-8') as f:
             data = json.load(f)
             return data
     except FileNotFoundError:
@@ -100,7 +100,7 @@ def load_warning_data():
 
 # 保存警告记录
 def save_warning_data(data):
-    with open('./stat/warning_counting.json', 'w', encoding='utf-8') as f:
+    with open('src/stat/warning_counting.json', 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 async def ann_message(type, target_nickname, target_id, user_name, user_avatar, reason, time, duration= None):
