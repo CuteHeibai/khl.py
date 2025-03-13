@@ -1,0 +1,80 @@
+[
+  {
+    "type": "card",
+    "theme": "secondary",
+    "size": "lg",
+    "modules": [
+      {
+        "type": "header",
+        "text": {
+          "type": "plain-text",
+          "content": "惩罚|(玩家housing名)"
+        }
+      },
+      {
+        "type": "section",
+        "text": {
+          "type": "paragraph",
+          "cols": 3,
+          "fields": [
+            {
+              "type": "kmarkdown",
+              "content": "**类型**\n"
+            },
+            {
+              "type": "kmarkdown",
+              "content": "**原因**\n"
+            },
+            {
+              "type": "kmarkdown",
+              "content": "**时间**\n"
+            }
+          ]
+        }
+      },
+      {
+        "type": "divider"
+      },
+      {
+        "type": "context",
+        "elements": [
+          {
+            "type": "plain-text",
+            "content": "管理员:"
+          },
+          {
+            "type": "image",
+            "src": "https://img.kaiheila.cn/assets/2021-01/7kr4FkWpLV0ku0ku.jpeg"
+          },
+           {
+            "type": "plain-text",
+            "content": "(管理员名字）"
+          }
+        ]
+      },
+      {
+        "type": "context",
+        "elements": [
+          {
+            "type": "plain-text",
+            "content": "对结果有异议？"
+          }
+        ]
+      },
+      {
+        "type": "action-group",
+        "elements": [
+          {
+            "type": "button",
+            "theme": "danger",
+            "value": "ok",
+            "text": {
+              "type": "plain-text",
+              "content": "点击申诉"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
